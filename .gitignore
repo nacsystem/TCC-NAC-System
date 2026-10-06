@@ -1,0 +1,17 @@
+# banco local e variáveis de ambiente
+*.db
+*.db-journal
+.env
+
+# python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# editor / sistema
+.vscode/
+.idea/
+.claude/
+Thumbs.db
+.DS_Store
