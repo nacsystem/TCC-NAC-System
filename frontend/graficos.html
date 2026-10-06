@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<!-- gráficos gerais -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Gráficos - NAC System</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/dados.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar">
+
+        <img src="img/logonac.jpeg" class="logo">
+
+        <div class="sidebar-title">
+            NAC SYSTEM
+        </div>
+
+        <nav class="menu" id="menuLateral"></nav>
+
+        <script>montarMenu("graficos");</script>
+
+    </aside>
+
+
+    <!-- ÁREA PRINCIPAL -->
+    <main class="main">
+
+        <header class="topbar">
+
+            <div>
+                <h1>Gráficos</h1>
+                <p>Produção geral e comparação das partículas</p>
+            </div>
+
+            <div class="usuario-logado">
+
+                <div>
+                    <strong id="usuarioNome">Usuário</strong>
+                    <small id="usuarioTipo">Operador</small>
+                </div>
+
+                <div class="avatar" id="avatarUsuario">U</div>
+
+            </div>
+
+        </header>
+
+
+        <section class="conteudo">
+
+            <div class="section-header">
+                <div>
+                    <h2>Visão geral da produção</h2>
+                    <p>Acompanhe os envases por turno e as partículas de cada sala.</p>
+                </div>
+            </div>
+
+
+            <div class="graficos-grid" id="graficosGrid">
+
+                <!-- ENVASES POR TURNO -->
+                <div class="grafico-card">
+
+                    <button type="button" class="btn-tela-cheia" title="Expandir"
+                        onclick="alternarFoco(this)"></button>
+
+                    <div class="grafico-header">
+                        <span>PRODUÇÃO</span>
+                        <h3>Envases por turno</h3>
+                        <p class="turno-resumo" id="turnoResumo"></p>
+                    </div>
+
+                    <div class="grafico-area">
+                        <canvas id="graficoTurnos"></canvas>
+                    </div>
+
+                </div>
+
+
+                <!-- PARTÍCULAS POR SALA -->
+                <div class="grafico-card">
+
+                    <button type="button" class="btn-tela-cheia" title="Expandir"
+                        onclick="alternarFoco(this)"></button>
+
+                    <div class="grafico-header">
+                        <span>MONITORAMENTO</span>
+                        <h3>Partículas por sala</h3>
+                    </div>
+
+                    <div class="grafico-area">
+                        <canvas id="grafico"></canvas>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script>
+
+const tipo = verificarLogin();
+
+if (tipo) {
+
+    document.getElementById("usuarioNome").textContent =
+        localStorage.getItem("usuario") || "Usuário";
+
+    document.getElementById("usuarioTipo").textContent =
+        tipo === "ADMIN" ? "Administrador" : "Operador";
+
+    document.getElementById("avatarUsuario").textContent =
+        tipo === "ADMIN" ? "A" : "O";
+
+    criarGraficos();
+
+}
+
+
+async function criarGraficos() {
+
+    let salas, envases;
+
+    try {
+        [salas, envases] = await Promise.all([carregarSalas(), carregarEnvases()]);
+    } catch (erro) {
+        alert(erro.message);
+        return;
+    }
+
+
+    /* envases por turno */
+
+    document.getElementById("turnoResumo").textContent =
+        TURNOS.map(function (t) { return t.nome + " " + t.faixa; }).join(" · ");
+
+    envases = envases.filter(function (e) { return !e.cancelado; });
+
+    const porTurno = TURNOS.map(function () { return 0; });
+
+    envases.forEach(function (e) {
+        const t = turnoDaHora(e.hora);
+        if (t) porTurno[TURNOS.indexOf(t)]++;
+    });
+
+    const nomesTurno = TURNOS.map(function (t) { return t.nome; });
+    const total = porTurno.reduce(function (a, b) { return a + b; }, 0) || 1;
+
+    new Chart(document.getElementById("graficoTurnos"), {
+        type: "doughnut",
+        data: {
+            labels: nomesTurno.map(function (n, i) { return n + " (" + porTurno[i] + ")"; }),
+            datasets: [{
+                data: porTurno,
+                backgroundColor: ["#ffd166", "#55f0a3", "#5b8cff", "#b48cff"],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "68%",
+            plugins: {
+                legend: { position: "bottom" },
+                tooltip: {
+                    callbacks: {
+                        label: function (c) {
+                            return " " + nomesTurno[c.dataIndex] + ": " + c.raw +
+                                " envase(s) – " + Math.round(c.raw * 100 / total) + "%";
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+
+    /* partículas da última leitura de cada sala */
+
+    new Chart(document.getElementById("grafico"), {
+        type: "bar",
+        data: {
+            labels: salas.map(function (s) { return "Sala " + s.numero; }),
+            datasets: [
+                {
+                    label: "0,5 µm",
+                    data: salas.map(function (s) { return Number(s.p05) || 0; }),
+                    backgroundColor: "#55f0a3",
+                    borderRadius: 7
+                },
+                {
+                    label: "5,0 µm",
+                    data: salas.map(function (s) { return Number(s.p50) || 0; }),
+                    backgroundColor: "#087a48",
+                    borderRadius: 7
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+                legend: { position: "bottom" },
+                tooltip: { padding: 10 }
+            },
+            scales: {
+                x: { grid: { display: false } },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: "rgba(255,255,255,.08)" },
+                    ticks: { precision: 0 }
+                }
+            }
+        }
+    });
+
+}
+
+
+/* =========================
+   EXPANDIR UM GRÁFICO
+========================= */
+
+const ICONE_EXPANDIR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+const ICONE_RECOLHER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+
+document.querySelectorAll(".btn-tela-cheia").forEach(function (b) {
+    b.innerHTML = ICONE_EXPANDIR;
+});
+
+
+function alternarFoco(botao) {
+
+    const grid = document.getElementById("graficosGrid");
+    const card = botao.closest(".grafico-card");
+    const focado = card.classList.contains("foco");
+
+    grid.classList.toggle("com-foco", !focado);
+
+    grid.querySelectorAll(".grafico-card").forEach(function (c) {
+
+        const este = c === card && !focado;
+
+        c.classList.toggle("foco", este);
+
+        const b = c.querySelector(".btn-tela-cheia");
+        b.innerHTML = este ? ICONE_RECOLHER : ICONE_EXPANDIR;
+        b.title = este ? "Mostrar os dois gráficos" : "Expandir";
+
+    });
+
+    /* força o Chart.js a redimensionar */
+    requestAnimationFrame(function () {
+        grid.querySelectorAll("canvas").forEach(function (cv) {
+            const g = Chart.getChart(cv);
+            if (g) g.resize();
+        });
+    });
+
+    if (!focado) {
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+}
+
+
+document.addEventListener("keydown", function (e) {
+
+    const aberto = document.querySelector(".grafico-card.foco .btn-tela-cheia");
+
+    if (e.key === "Escape" && aberto) {
+        alternarFoco(aberto);
+    }
+
+});
+
+</script>
+
+</body>
+</html>

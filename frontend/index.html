@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<!-- tela inicial (escolher admin ou operador) -->
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>NAC System</title>
+
+    <link rel="stylesheet"
+        href="css/style.css">
+
+</head>
+
+<body>
+
+    <div class="login-page">
+
+        <div class="login-container">
+
+            <img
+                src="img/logonac.jpeg"
+                class="logo"
+            >
+
+            <div class="system-name">
+
+                <strong>
+                    NAC SYSTEM
+                </strong>
+
+            </div>
+
+            <div class="line-neon"></div>
+
+
+            <h2>
+                Acesso ao Sistema
+            </h2>
+
+
+            <p class="subtitulo">
+                Selecione o tipo de acesso
+            </p>
+
+
+            <div class="access-buttons">
+
+
+                <!-- ADMINISTRADOR -->
+
+                <button
+                    class="access-button"
+                    onclick="window.location.href='login-admin.html'"
+                >
+
+                    <div class="access-icon pessoa">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+
+                            <circle
+                                cx="12"
+                                cy="8"
+                                r="4"
+                            ></circle>
+
+                            <path
+                                d="M4 21c0-4 3.5-7 8-7s8 3 8 7"
+                            ></path>
+
+                        </svg>
+
+                    </div>
+
+
+                    <div class="access-text">
+
+                        <strong>
+                            Administrador
+                        </strong>
+
+                        <small>
+                            Acesso completo ao sistema
+                        </small>
+
+                    </div>
+
+
+                    <b>
+                        ›
+                    </b>
+
+                </button>
+
+
+
+                <!-- USUÁRIO / OPERADOR -->
+
+                <button
+                    class="access-button"
+                    onclick="window.location.href='login-operador.html'"
+                >
+
+                    <div class="access-icon pessoa">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+
+                            <circle
+                                cx="12"
+                                cy="8"
+                                r="4"
+                            ></circle>
+
+                            <path
+                                d="M4 21c0-4 3.5-7 8-7s8 3 8 7"
+                            ></path>
+
+                        </svg>
+
+                    </div>
+
+
+                    <div class="access-text">
+
+                        <strong>
+                            Usuário
+                        </strong>
+
+                        <small>
+                            Acesso de operador
+                        </small>
+
+                    </div>
+
+
+                    <b>
+                        ›
+                    </b>
+
+                </button>
+
+            </div>
+
+
+            <div class="system-status">
+
+                <span class="status-dot"></span>
+
+                SISTEMA ONLINE
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

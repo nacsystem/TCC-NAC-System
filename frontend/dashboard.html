@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<!-- painel de salas -->
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Salas - NAC System</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="js/dados.js"></script>
+
+</head>
+
+<body>
+
+
+<div class="app">
+
+
+    <!-- MENU -->
+
+    <aside class="sidebar">
+
+        <img src="img/logonac.jpeg" class="logo">
+
+        <div class="sidebar-title">
+            NAC SYSTEM
+        </div>
+
+
+        <nav
+            class="menu"
+            id="menuLateral"
+        ></nav>
+
+
+        <script>
+            montarMenu("dashboard");
+        </script>
+
+    </aside>
+
+
+
+    <!-- CONTEÚDO -->
+
+    <main class="main">
+
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>
+                    Salas
+                </h1>
+
+                <p>
+                    Monitoramento das salas em tempo real
+                </p>
+
+            </div>
+
+
+            <div class="usuario-logado">
+
+                <div>
+
+                    <strong id="usuarioNome">
+                        Usuário
+                    </strong>
+
+                    <small id="usuarioTipo">
+                        Operador
+                    </small>
+
+                </div>
+
+
+                <div
+                    class="avatar"
+                    id="avatarUsuario"
+                >
+                    U
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <section class="conteudo">
+
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Acompanhamento
+                    </h2>
+
+                    <p>
+                        Acompanhe o estado atual das salas
+                    </p>
+
+                </div>
+
+
+                <div class="online">
+
+                    <span></span>
+
+                    SISTEMA ONLINE
+
+                </div>
+
+            </div>
+
+
+
+            <div
+                class="salas-grid"
+                id="salasGrid"
+            ></div>
+
+
+        </section>
+
+    </main>
+
+</div>
+
+
+
+<script>
+
+    const tipo =
+        verificarLogin();
+
+
+    if (tipo) {
+
+        document.getElementById("usuarioNome").textContent =
+            localStorage.getItem("usuario") || "Usuário";
+
+        document.getElementById("usuarioTipo").textContent =
+            tipo === "ADMIN"
+                ? "Administrador"
+                : "Operador";
+
+        document.getElementById("avatarUsuario").textContent =
+            tipo === "ADMIN"
+                ? "A"
+                : "O";
+
+
+        carregarDashboard();
+
+    }
+
+
+
+    /* um card por sala */
+    async function carregarDashboard() {
+
+        const grid =
+            document.getElementById("salasGrid");
+
+        let salas;
+
+        try {
+
+            salas = await carregarSalas();
+
+        } catch (erro) {
+
+            grid.innerHTML =
+                `<div class="nenhuma-sala">${escapeHTML(erro.message)}</div>`;
+
+            return;
+
+        }
+
+
+        grid.innerHTML = "";
+
+
+        if (salas.length === 0) {
+
+            grid.innerHTML =
+                `<div class="nenhuma-sala">${
+                    tipo === "ADMIN"
+                        ? "Nenhuma sala cadastrada."
+                        : "Nenhuma sala designada para você. Fale com o administrador."
+                }</div>`;
+
+            return;
+
+        }
+
+
+        salas.forEach(function(sala) {
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "sala-card";
+
+
+            card.innerHTML = `
+
+                <div class="sala-top">
+
+                    <div>
+
+                        <span class="sala-label">
+                            SALA
+                        </span>
+
+                        <h3>
+                            ${escapeHTML(sala.numero)}
+                        </h3>
+
+                        <span class="sala-grau ${sala.grau ? "" : "sem"}">
+                            ${sala.grau ? "GRAU " + escapeHTML(sala.grau) : "SEM GRAU"}
+                        </span>
+
+                    </div>
+
+
+                    <div class="status ${
+                        sala.producao
+                            ? "producao"
+                            : "parada"
+                    }">
+
+                        <span></span>
+
+                        ${
+                            sala.producao
+                                ? "EM PRODUÇÃO"
+                                : "PARADA"
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <div class="dados-sala">
+
+                    <div class="dado">
+
+                        <small>
+                            PARTÍCULAS 0,5 µm
+                        </small>
+
+                        <strong>
+                            ${valorOuTraco(sala.p05)}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="dado">
+
+                        <small>
+                            PARTÍCULAS 5,0 µm
+                        </small>
+
+                        <strong>
+                            ${valorOuTraco(sala.p50)}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="ultima-leitura">
+
+                    <span>
+                        ÚLTIMO ENVASE
+                    </span>
+
+                    <strong>
+                        ${
+                            sala.data
+                                ? escapeHTML(sala.data) + " às " + escapeHTML(sala.hora)
+                                : "Nenhum envase registrado"
+                        }
+                    </strong>
+
+                </div>
+
+
+                <button
+                    class="btn-grafico"
+                    onclick="abrirGrafico('${escapeHTML(sala.numero)}')"
+                >
+                    VER GRÁFICO
+                </button>
+
+                <button
+                    class="btn-grafico"
+                    onclick="abrirEnvase('${escapeHTML(sala.numero)}')"
+                >
+                    REGISTRAR ENVASE
+                </button>
+
+            `;
+
+
+            grid.appendChild(card);
+
+        });
+
+    }
+
+
+
+    /* sala escolhida vai pelo localStorage */
+    function abrirGrafico(numero) {
+
+        localStorage.setItem(
+            "salaSelecionada",
+            numero
+        );
+
+        window.location.href =
+            "grafico-sala.html";
+
+    }
+
+
+
+    function abrirEnvase(numero) {
+
+        localStorage.setItem(
+            "salaSelecionada",
+            numero
+        );
+
+        window.location.href =
+            "envase.html";
+
+    }
+
+</script>
+
+
+</body>
+</html>

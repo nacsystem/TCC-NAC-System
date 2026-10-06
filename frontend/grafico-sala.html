@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<!-- detalhe de uma sala -->
+
+<a href="salas.html" class="btn-voltar-salas">
+    ← VOLTAR PARA SALAS
+</a>
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Gráfico da Sala - NAC System</title>
+
+    <link rel="stylesheet"
+        href="css/style.css">
+
+    <script src="js/dados.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <img src="img/logonac.jpeg" class="logo">
+
+        <div class="sidebar-title">
+            NAC SYSTEM
+        </div>
+
+        <nav class="menu"
+            id="menuLateral">
+        </nav>
+
+        <script>
+
+            montarMenu("graficos");
+
+            document
+                .querySelector(".app")
+                .classList.add("menu-pronto");
+
+        </script>
+
+    </aside>
+
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <div>
+
+                <h1 id="tituloSala">
+                    Sala
+                </h1>
+
+                <p>
+                    Análise de partículas
+                </p>
+
+            </div>
+
+            <div class="usuario-logado">
+
+                <div>
+
+                    <strong id="usuarioNome">
+                        Usuário
+                    </strong>
+
+                    <small id="usuarioTipo">
+                        Operador
+                    </small>
+
+                </div>
+
+                <div class="avatar"
+                    id="avatarUsuario">
+                    O
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <section class="conteudo">
+
+            <button
+                class="btn-voltar-pagina"
+                onclick="window.location.href='dashboard.html'">
+
+                ← VOLTAR PARA PRODUÇÃO
+
+            </button>
+
+
+            <div class="sala-detalhe">
+
+                <div>
+
+                    <span class="sala-label">
+                        SALA
+                    </span>
+
+                    <h2 id="numeroSala">
+                        --
+                    </h2>
+
+                </div>
+
+                <span
+                    id="statusSala"
+                    class="status">
+
+                    --
+
+                </span>
+
+            </div>
+
+
+            <div class="indicadores">
+
+                <div class="indicador">
+
+                    <span>
+                        Partículas 0,5 µm
+                    </span>
+
+                    <strong id="valor05">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <div class="indicador">
+
+                    <span>
+                        Partículas 5,0 µm
+                    </span>
+
+                    <strong id="valor50">
+                        --
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="grafico-card">
+
+                <div class="grafico-header">
+
+                    <span>
+                        MONITORAMENTO
+                    </span>
+
+                    <h3>
+                        Contagem de partículas
+                    </h3>
+
+                </div>
+
+                <div class="grafico-area">
+
+                    <canvas id="graficoSala"></canvas>
+
+                </div>
+
+            </div>
+
+            <div class="grafico-card"
+                style="margin-top: 18px;">
+
+                <div class="grafico-header">
+
+                    <span>
+                        HISTÓRICO
+                    </span>
+
+                    <h3>
+                        Evolução dos últimos envases
+                    </h3>
+
+                </div>
+
+                <div class="grafico-area">
+
+                    <canvas id="graficoHistorico"></canvas>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script>
+
+const tipo = verificarLogin();
+
+if (tipo) {
+
+    document.getElementById("usuarioNome").textContent =
+        localStorage.getItem("usuario") || "Usuário";
+
+    document.getElementById("usuarioTipo").textContent =
+        tipo === "ADMIN" ? "Administrador" : "Operador";
+
+    document.getElementById("avatarUsuario").textContent =
+        tipo === "ADMIN" ? "A" : "O";
+
+    carregarGraficoSala();
+
+}
+
+
+async function carregarGraficoSala() {
+
+    const numero = localStorage.getItem("salaSelecionada");
+
+    let sala = null;
+
+    try {
+
+        if (numero) {
+            sala = await carregarSala(numero);
+        }
+
+    } catch (erro) {
+
+        sala = null;
+
+    }
+
+
+    if (!sala) {
+
+        window.location.href = "graficos.html";
+
+        return;
+
+    }
+
+
+    document.getElementById("tituloSala").textContent =
+        `Sala ${sala.numero}`;
+
+    document.getElementById("numeroSala").textContent =
+        sala.numero;
+
+    document.getElementById("valor05").textContent =
+        valorOuTraco(sala.p05);
+
+    document.getElementById("valor50").textContent =
+        valorOuTraco(sala.p50);
+
+
+    /* classificação do último envase (calculada pelo servidor) */
+
+    const status = document.getElementById("statusSala");
+
+    status.textContent = sala.classificacao || "SEM ENVASE";
+
+    status.className =
+        "status " + classeStatus(sala.classificacao);
+
+
+    /* gráfico do último envase */
+
+    const ctx = document.getElementById("graficoSala").getContext("2d");
+
+    new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: ["0,5 µm", "5,0 µm"],
+            datasets: [{
+                label: `Sala ${sala.numero} - último envase`,
+                data: [Number(sala.p05) || 0, Number(sala.p50) || 0],
+                backgroundColor: ["#55f0a3", "#087a48"],
+                borderRadius: 9,
+                maxBarThickness: 80
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "bottom" }, tooltip: { padding: 10 } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "rgba(255,255,255,.08)" } }
+            }
+        }
+    });
+
+
+    /* histórico: evolução dos últimos envases da sala */
+
+    let envases = [];
+
+    try {
+
+        envases = await carregarEnvasesDaSala(sala.numero, 30);
+
+    } catch (erro) {
+
+        envases = [];
+
+    }
+
+    /* cancelados não entram no gráfico */
+    envases = envases.filter(function (e) { return !e.cancelado; });
+
+    /* a API devolve do mais novo para o mais antigo; o gráfico vai do antigo ao novo */
+    envases.reverse();
+
+    const area = document.getElementById("graficoHistorico").parentElement;
+
+    if (envases.length === 0) {
+
+        area.innerHTML =
+            '<div class="sem-registros">Nenhum envase registrado nesta sala ainda.</div>';
+
+        return;
+
+    }
+
+    new Chart(document.getElementById("graficoHistorico").getContext("2d"), {
+        type: "line",
+        data: {
+            labels: envases.map(function (e) {
+                return e.data.slice(0, 5) + " " + e.hora.slice(0, 5);
+            }),
+            datasets: [
+                {
+                    label: "0,5 µm",
+                    data: envases.map(function (e) { return e.p05; }),
+                    borderColor: "#55f0a3",
+                    backgroundColor: "#55f0a3",
+                    tension: 0.25
+                },
+                {
+                    label: "5,0 µm",
+                    data: envases.map(function (e) { return e.p50; }),
+                    borderColor: "#087a48",
+                    backgroundColor: "#087a48",
+                    tension: 0.25
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+                legend: { position: "bottom" },
+                tooltip: {
+                    padding: 10,
+                    callbacks: {
+                        afterBody: function (itens) {
+                            const e = envases[itens[0].dataIndex];
+                            return e.grau ? "Grau " + e.grau + " · " + e.classificacao : "";
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, grid: { color: "rgba(255,255,255,.08)" } }
+            }
+        }
+    });
+
+}
+
+</script>
+
+</body>
+
+</html>

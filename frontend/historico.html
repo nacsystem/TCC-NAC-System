@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<!-- histórico de envases + PDF -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Histórico - NAC System</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/dados.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="js/pdf-historico.js"></script>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar">
+
+        <img src="img/logonac.jpeg" class="logo">
+
+        <div class="sidebar-title">
+            NAC SYSTEM
+        </div>
+
+        <nav class="menu" id="menuLateral"></nav>
+
+    </aside>
+
+
+    <!-- ÁREA PRINCIPAL -->
+    <main class="main">
+
+        <!-- TOPO -->
+        <header class="topbar">
+
+            <div>
+                <h1>Histórico</h1>
+                <p>Histórico dos envases de cada sala</p>
+            </div>
+
+            <div class="usuario-logado">
+
+                <div>
+                    <strong id="usuarioNome">Admin</strong>
+                    <small id="usuarioTipo">Administrador</small>
+                </div>
+
+                <div class="avatar" id="avatarUsuario">
+                    A
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTEÚDO -->
+        <section class="conteudo">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Histórico das Salas</h2>
+                    <p>Registros de partículas de cada envase.</p>
+                </div>
+
+            </div>
+
+
+            <!-- FILTROS -->
+            <div class="filtros-historico">
+
+                <div class="input-group">
+                    <label for="filtroSala">Sala</label>
+                    <select id="filtroSala">
+                        <option value="">Todas as salas</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="filtroTurno">Turno</label>
+                    <select id="filtroTurno">
+                        <option value="">Todos os turnos</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="filtroDe">De</label>
+                    <input type="date" id="filtroDe">
+                </div>
+
+                <div class="input-group">
+                    <label for="filtroAte">Até</label>
+                    <input type="date" id="filtroAte">
+                </div>
+
+                <button class="btn-secundario" type="button" onclick="limparFiltros()">
+                    LIMPAR FILTROS
+                </button>
+
+            </div>
+
+            <p id="mensagemFiltro" class="mensagem-form"></p>
+
+
+            <!-- RESUMO -->
+            <div class="resumo-envases">
+
+                <div class="indicador">
+                    <span>Envases</span>
+                    <strong id="resTotal">--</strong>
+                </div>
+
+                <div class="indicador">
+                    <span>Estéreis</span>
+                    <strong id="resEsteril">--</strong>
+                </div>
+
+                <div class="indicador">
+                    <span>Contaminados</span>
+                    <strong id="resContaminada">--</strong>
+                </div>
+
+                <div class="indicador">
+                    <span>Cancelados</span>
+                    <strong id="resCancelado">--</strong>
+                </div>
+
+            </div>
+
+
+            <div class="grafico-acoes">
+                <button class="btn-secundario" type="button" id="btnPdf" onclick="gerarHistoricoPDF()">
+                    EXPORTAR HISTÓRICO EM PDF
+                </button>
+            </div>
+
+
+            <!-- TABELA -->
+            <div class="table-card">
+
+                <div class="table-container tabela-compacta">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Sala</th>
+                                <th>Data</th>
+                                <th>Hora</th>
+                                <th>Turno</th>
+                                <th>Grau</th>
+                                <th>0,5 µm</th>
+                                <th>5,0 µm</th>
+                                <th>Status</th>
+                                <th>Registrado por</th>
+                                <th id="colAcao" style="display:none;"></th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="historicoTabela">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script>
+
+    /* MONTA O MENU */
+    montarMenu("historico");
+
+
+    /* ADMIN VÊ TUDO; OPERADOR VÊ SÓ AS SUAS SALAS (o servidor garante) */
+    const tipo = verificarLogin();
+
+    const ehAdmin = tipo === "ADMIN";
+
+    let envasesDoServidor = [];   /* resultado dos filtros de sala/data */
+    let envasesAtuais = [];       /* depois do filtro de turno (é o que aparece e vai pro PDF) */
+
+
+    if (tipo) {
+
+        document.getElementById("usuarioNome").textContent =
+            localStorage.getItem("usuario") || "Admin";
+
+        document.getElementById("usuarioTipo").textContent =
+            ehAdmin ? "Administrador" : "Operador";
+
+        document.getElementById("avatarUsuario").textContent =
+            ehAdmin ? "A" : "O";
+
+        if (ehAdmin) {
+            document.getElementById("colAcao").style.display = "";
+        }
+
+        iniciar();
+
+    }
+
+
+    async function iniciar() {
+
+        document.getElementById("filtroTurno").innerHTML +=
+            TURNOS.map(function (t) {
+                return `<option value="${t.id}">${t.nome} (${t.faixa})</option>`;
+            }).join("");
+
+        try {
+
+            const salas = await carregarSalas();
+
+            const select = document.getElementById("filtroSala");
+
+            salas.forEach(function (sala) {
+
+                const opcao = document.createElement("option");
+                opcao.value = sala.numero;
+                opcao.textContent = "Sala " + sala.numero;
+                select.appendChild(opcao);
+
+            });
+
+        } catch (erro) {
+            /* a tabela mostra o erro logo abaixo */
+        }
+
+        ["filtroSala", "filtroDe", "filtroAte"].forEach(function (id) {
+            document.getElementById(id).addEventListener("change", aplicarFiltros);
+        });
+
+        /* turno é filtrado aqui mesmo, sem ir ao servidor */
+        document.getElementById("filtroTurno").addEventListener("change", filtrarTurno);
+
+        aplicarFiltros();
+
+    }
+
+
+    function filtrosAtuais() {
+
+        return {
+            sala: document.getElementById("filtroSala").value,
+            de: document.getElementById("filtroDe").value,
+            ate: document.getElementById("filtroAte").value,
+            turno: document.getElementById("filtroTurno").value
+        };
+
+    }
+
+
+    function limparFiltros() {
+
+        document.getElementById("filtroSala").value = "";
+        document.getElementById("filtroTurno").value = "";
+        document.getElementById("filtroDe").value = "";
+        document.getElementById("filtroAte").value = "";
+
+        aplicarFiltros();
+
+    }
+
+
+    async function aplicarFiltros() {
+
+        const f = filtrosAtuais();
+        const mensagem = document.getElementById("mensagemFiltro");
+        const tbody = document.getElementById("historicoTabela");
+
+        mensagem.textContent = "";
+
+        if (f.de && f.ate && f.de > f.ate) {
+
+            mensagem.textContent = "A data inicial não pode ser depois da data final.";
+            mensagem.className = "mensagem-form erro";
+
+            return;
+
+        }
+
+        try {
+
+            envasesDoServidor = await carregarEnvases({ sala: f.sala, de: f.de, ate: f.ate });
+
+        } catch (erro) {
+
+            envasesDoServidor = [];
+            envasesAtuais = [];
+
+            tbody.innerHTML =
+                `<tr><td colspan="10" class="sem-registros">${escapeHTML(erro.message)}</td></tr>`;
+
+            desenharResumo();
+
+            return;
+
+        }
+
+        filtrarTurno();
+
+    }
+
+
+    function filtrarTurno() {
+
+        const turno = document.getElementById("filtroTurno").value;
+
+        envasesAtuais = turno
+            ? envasesDoServidor.filter(function (e) {
+                  const t = turnoDaHora(e.hora);
+                  return t && t.id === turno;
+              })
+            : envasesDoServidor;
+
+        desenharResumo();
+        desenharTabela();
+
+    }
+
+
+    function desenharResumo() {
+
+        /* cancelados aparecem na tabela, mas não entram nas contagens */
+        const validos = envasesAtuais.filter(function (e) { return !e.cancelado; });
+
+        const contar = function (nome) {
+            return validos.filter(function (e) {
+                return e.classificacao === nome;
+            }).length;
+        };
+
+        document.getElementById("resTotal").textContent = validos.length;
+        document.getElementById("resCancelado").textContent = envasesAtuais.length - validos.length;
+        document.getElementById("resEsteril").textContent = contar("ESTÉRIL");
+        document.getElementById("resContaminada").textContent = contar("CONTAMINADA");
+
+    }
+
+
+    function desenharTabela() {
+
+        const tbody = document.getElementById("historicoTabela");
+
+        if (envasesAtuais.length === 0) {
+
+            tbody.innerHTML =
+                '<tr><td colspan="10" class="sem-registros">Nenhum envase encontrado.</td></tr>';
+
+            return;
+
+        }
+
+        const colunas = ehAdmin ? 10 : 9;
+
+        tbody.innerHTML = envasesAtuais.map(function (e) {
+
+            return `
+                <tr class="${e.cancelado ? "envase-cancelado" : ""}">
+
+                    <td>Sala ${escapeHTML(e.sala)}</td>
+
+                    <td>${escapeHTML(e.data)}</td>
+
+                    <td>${escapeHTML(e.hora)}</td>
+
+                    <td>${turnoDaHora(e.hora) ? turnoDaHora(e.hora).nome : "--"}</td>
+
+                    <td>${e.grau ? escapeHTML(e.grau) : "--"}</td>
+
+                    <td>${e.p05}</td>
+
+                    <td>${e.p50}</td>
+
+                    <td>
+
+                        ${
+                            e.cancelado
+                                ? '<span class="historico-status status-cinza">CANCELADO</span>'
+                                : `<span class="historico-status ${classeStatus(e.classificacao)}">${e.classificacao}</span>`
+                        }
+
+                    </td>
+
+                    <td>${escapeHTML(e.registrado_por)}</td>
+
+                    ${
+                        ehAdmin
+                            ? `<td>${
+                                   e.cancelado
+                                       ? ""
+                                       : `<button type="button" class="btn-apagar"
+                                              onclick="cancelarEnvase(${Number(e.id)})">
+                                              CANCELAR
+                                          </button>`
+                               }</td>`
+                            : ""
+                    }
+
+                </tr>
+
+                ${
+                    e.cancelado
+                        ? `<tr class="envase-cancelado-motivo">
+                               <td colspan="${colunas}">
+                                   Cancelado por <strong>${escapeHTML(e.cancelado_por)}</strong>
+                                   em ${escapeHTML(e.cancelado_em)}: ${escapeHTML(e.motivo_cancelamento)}
+                               </td>
+                           </tr>`
+                        : ""
+                }
+            `;
+
+        }).join("");
+
+    }
+
+
+    async function cancelarEnvase(id) {
+
+        const motivo = await pedirTexto({
+            titulo: "Cancelar envase",
+            mensagem: "O envase continua no histórico, marcado como cancelado. " +
+                "Ele sai das contagens e dos gráficos. Isso não pode ser desfeito.",
+            placeholder: "Motivo do cancelamento (ex.: valor digitado errado)",
+            botao: "CANCELAR ENVASE",
+            minimo: 5
+        });
+
+        if (!motivo) {
+            return;
+        }
+
+        try {
+
+            await cancelarEnvaseApi(id, motivo);
+
+            await aplicarFiltros();
+
+        } catch (erro) {
+
+            alert(erro.message);
+
+        }
+
+    }
+
+
+    /* LOGO PARA O PDF (se não conseguir carregar, o PDF sai sem logo) */
+    async function carregarLogo() {
+
+        try {
+
+            const resposta = await fetch("img/logonac.jpeg");
+            const blob = await resposta.blob();
+
+            return await new Promise(function (resolve, reject) {
+
+                const leitor = new FileReader();
+                leitor.onload = function () { resolve(leitor.result); };
+                leitor.onerror = reject;
+                leitor.readAsDataURL(blob);
+
+            });
+
+        } catch (erro) {
+
+            return null;
+
+        }
+
+    }
+
+
+    async function gerarHistoricoPDF() {
+
+        if (envasesAtuais.length === 0) {
+            alert("Não há envases para exportar com os filtros atuais.");
+            return;
+        }
+
+        const botao = document.getElementById("btnPdf");
+
+        botao.disabled = true;
+
+        try {
+
+            const logo = await carregarLogo();
+
+            const doc = NacPDF.gerar({
+                jsPDF: window.jspdf.jsPDF,
+                envases: envasesAtuais,
+                filtros: filtrosAtuais(),
+                usuario: localStorage.getItem("usuario") || "",
+                logo: logo
+            });
+
+            doc.save(`NAC-historico-envases-${new Date().toISOString().slice(0, 10)}.pdf`);
+
+        } catch (erro) {
+
+            alert("Não foi possível gerar o PDF: " + erro.message);
+
+        } finally {
+
+            botao.disabled = false;
+
+        }
+
+    }
+
+</script>
+
+</body>
+</html>

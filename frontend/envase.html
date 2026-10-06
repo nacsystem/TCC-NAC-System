@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<!-- registrar envase -->
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Registrar Envase - NAC System</title>
+
+    <link rel="stylesheet"
+        href="css/style.css">
+
+    <script src="js/dados.js"></script>
+
+</head>
+
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <img src="img/logonac.jpeg" class="logo">
+
+        <div class="sidebar-title">
+            NAC SYSTEM
+        </div>
+
+        <nav class="menu"
+            id="menuLateral">
+        </nav>
+
+        <script>
+
+            montarMenu("envase");
+
+            document
+                .querySelector(".app")
+                .classList.add("menu-pronto");
+
+        </script>
+
+    </aside>
+
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Registrar Envase</h1>
+
+                <p>
+                    Registre um envase em uma das suas salas
+                </p>
+
+            </div>
+
+            <div class="usuario-logado">
+
+                <div>
+
+                    <strong id="usuarioNome">
+                        Usuário
+                    </strong>
+
+                    <small id="usuarioTipo">
+                        Operador
+                    </small>
+
+                </div>
+
+                <div class="avatar"
+                    id="avatarUsuario">
+                    O
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <section class="conteudo">
+
+            <!-- NOVO ENVASE -->
+
+            <div class="form-card">
+
+                <form id="formEnvase">
+
+                    <div class="form-grid">
+
+                        <div class="input-group">
+
+                            <label>
+                                Sala
+                            </label>
+
+                            <select id="sala" required>
+                            </select>
+
+                        </div>
+
+
+                        <div class="input-group">
+
+                            <label>
+                                Grau da sala
+                            </label>
+
+                            <input
+                                type="text"
+                                id="grauSala"
+                                readonly
+                                tabindex="-1"
+                                class="campo-somente-leitura"
+                            >
+
+                            <small class="limites-grau" id="limitesGrau"></small>
+
+                        </div>
+
+
+                        <div class="input-group">
+
+                            <label>
+                                Partículas 0,5 µm
+                            </label>
+
+                            <input
+                                type="text"
+                                id="p05"
+                                maxlength="7"
+                                inputmode="numeric"
+                                pattern="[0-9]{1,7}"
+                                required
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                            >
+
+                        </div>
+
+
+                        <div class="input-group">
+
+                            <label>
+                                Partículas 5,0 µm
+                            </label>
+
+                            <input
+                                type="text"
+                                id="p50"
+                                maxlength="7"
+                                inputmode="numeric"
+                                pattern="[0-9]{1,7}"
+                                required
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                            >
+
+                        </div>
+
+
+                        <div class="input-group">
+
+                            <label>
+                                Data
+                            </label>
+
+                            <input
+                                type="date"
+                                id="data"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="input-group">
+
+                            <label>
+                                Hora
+                            </label>
+
+                            <input
+                                type="time"
+                                id="hora"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="input-group"
+                            style="grid-column: 1 / -1;">
+
+                            <label>
+                                Observação (opcional)
+                            </label>
+
+                            <input
+                                type="text"
+                                id="observacao"
+                                maxlength="200"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <p
+                        id="mensagemEnvase"
+                        class="mensagem-form">
+                    </p>
+
+
+                    <button
+                        type="submit"
+                        class="btn-login"
+                        id="btnEnvase">
+
+                        REGISTRAR ENVASE
+
+                    </button>
+
+                </form>
+
+            </div>
+
+
+            <!-- HISTÓRICO DA SALA -->
+
+            <div class="section-header"
+                style="margin-top: 30px;">
+
+                <div>
+
+                    <h2 id="tituloHistorico">
+                        Últimos envases
+                    </h2>
+
+                    <p>
+                        Os 15 registros mais recentes da sala selecionada
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-card">
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Hora</th>
+                                <th>Grau</th>
+                                <th>0,5 µm</th>
+                                <th>5,0 µm</th>
+                                <th>Status</th>
+                                <th>Registrado por</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="envasesTabela">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script>
+
+const tipo = verificarLogin();
+
+const selectSala = document.getElementById("sala");
+
+let salasCarregadas = [];
+
+
+if (tipo) {
+
+    document.getElementById("usuarioNome").textContent =
+        localStorage.getItem("usuario") || "Usuário";
+
+    document.getElementById("usuarioTipo").textContent =
+        tipo === "ADMIN" ? "Administrador" : "Operador";
+
+    document.getElementById("avatarUsuario").textContent =
+        tipo === "ADMIN" ? "A" : "O";
+
+    iniciar();
+
+}
+
+
+function mostrarMensagem(texto, classe) {
+
+    const mensagem = document.getElementById("mensagemEnvase");
+
+    mensagem.textContent = texto;
+    mensagem.className = "mensagem-form " + classe;
+
+}
+
+
+function preencherDataHoraAgora() {
+
+    const data = document.getElementById("data");
+
+    data.value = hojeISO();
+    data.max = hojeISO();
+
+    document.getElementById("hora").value = horaAgora();
+
+}
+
+
+async function iniciar() {
+
+    preencherDataHoraAgora();
+
+    let salas;
+
+    try {
+
+        salas = await carregarSalas();
+
+    } catch (erro) {
+
+        mostrarMensagem(erro.message, "erro");
+        return;
+
+    }
+
+
+    if (salas.length === 0) {
+
+        selectSala.innerHTML = "";
+
+        document.getElementById("formEnvase")
+            .querySelectorAll("input, select, button")
+            .forEach(function(campo) { campo.disabled = true; });
+
+        mostrarMensagem(
+            tipo === "ADMIN"
+                ? "Cadastre uma sala primeiro."
+                : "Você ainda não tem salas designadas. Fale com o administrador.",
+            "erro"
+        );
+
+        document.getElementById("envasesTabela").innerHTML =
+            '<tr><td colspan="7" class="sem-registros">Nenhuma sala disponível.</td></tr>';
+
+        return;
+
+    }
+
+
+    selectSala.innerHTML = salas.map(function(sala) {
+
+        return `<option value="${escapeHTML(sala.numero)}">Sala ${escapeHTML(sala.numero)}</option>`;
+
+    }).join("");
+
+
+    const escolhida = localStorage.getItem("salaSelecionada");
+
+    if (escolhida && salas.some(function(s) { return s.numero === escolhida; })) {
+        selectSala.value = escolhida;
+    }
+
+
+    salasCarregadas = salas;
+
+    selectSala.addEventListener("change", function() {
+        mostrarGrauDaSala();
+        carregarTabela();
+    });
+
+    mostrarGrauDaSala();
+    carregarTabela();
+
+}
+
+
+/* grau é da sala (definido pelo administrador): só mostra, não dá para mudar aqui */
+function mostrarGrauDaSala() {
+
+    const sala = salasCarregadas.find(function(s) { return s.numero === selectSala.value; });
+    const grau = sala ? sala.grau : "";
+    const botao = document.getElementById("btnEnvase");
+
+    document.getElementById("grauSala").value = grau ? "Grau " + grau : "Sem grau definido";
+
+    document.getElementById("limitesGrau").textContent = grau
+        ? "Estéril se 0,5 µm ≤ " + LIMITES_GRAU[grau].p05.toLocaleString("pt-BR") +
+          " e 5,0 µm ≤ " + LIMITES_GRAU[grau].p50.toLocaleString("pt-BR")
+        : (tipo === "ADMIN"
+            ? "Defina o grau desta sala em Cadastrar Sala."
+            : "Peça ao administrador para definir o grau desta sala.");
+
+    document.getElementById("limitesGrau").classList.toggle("erro", !grau);
+    botao.disabled = !grau;
+
+}
+
+
+async function carregarTabela() {
+
+    const tbody = document.getElementById("envasesTabela");
+
+    const numero = selectSala.value;
+
+    document.getElementById("tituloHistorico").textContent =
+        "Últimos envases - Sala " + numero;
+
+    let envases;
+
+    try {
+
+        envases = await carregarEnvasesDaSala(numero, 15);
+
+    } catch (erro) {
+
+        tbody.innerHTML =
+            `<tr><td colspan="7" class="sem-registros">${escapeHTML(erro.message)}</td></tr>`;
+
+        return;
+
+    }
+
+
+    if (envases.length === 0) {
+
+        tbody.innerHTML =
+            '<tr><td colspan="7" class="sem-registros">Nenhum envase registrado nesta sala ainda.</td></tr>';
+
+        return;
+
+    }
+
+
+    tbody.innerHTML = envases.map(function(e) {
+
+        return `
+            <tr class="${e.cancelado ? "envase-cancelado" : ""}"
+                title="${e.cancelado ? escapeHTML("Cancelado: " + e.motivo_cancelamento) : ""}">
+                <td>${escapeHTML(e.data)}</td>
+                <td>${escapeHTML(e.hora)}</td>
+                <td>${e.grau ? escapeHTML(e.grau) : "--"}</td>
+                <td>${e.p05}</td>
+                <td>${e.p50}</td>
+                <td>
+                    ${
+                        e.cancelado
+                            ? '<span class="historico-status status-cinza">CANCELADO</span>'
+                            : `<span class="historico-status ${classeStatus(e.classificacao)}">${e.classificacao}</span>`
+                    }
+                </td>
+                <td>${escapeHTML(e.registrado_por)}</td>
+            </tr>
+        `;
+
+    }).join("");
+
+}
+
+
+/* =========================
+   REGISTRAR ENVASE
+========================= */
+
+document
+    .getElementById("formEnvase")
+    .addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const botao = document.getElementById("btnEnvase");
+
+        botao.disabled = true;
+
+        try {
+
+            const envase = await registrarEnvase({
+                sala: selectSala.value,
+                p05: document.getElementById("p05").value,
+                p50: document.getElementById("p50").value,
+                observacao: document.getElementById("observacao").value.trim(),
+                data: formatarData(document.getElementById("data").value),
+                hora: document.getElementById("hora").value
+            });
+
+            mostrarMensagem(
+                "Envase registrado na Sala " + envase.sala +
+                " - classificação: " + envase.classificacao + ".",
+                "sucesso"
+            );
+
+            localStorage.setItem("salaSelecionada", envase.sala);
+
+            document.getElementById("p05").value = "";
+            document.getElementById("p50").value = "";
+            document.getElementById("observacao").value = "";
+
+            preencherDataHoraAgora();
+
+            await carregarTabela();
+
+        } catch (erro) {
+
+            mostrarMensagem(erro.message, "erro");
+
+        } finally {
+
+            botao.disabled = false;
+
+        }
+
+    });
+
+</script>
+
+</body>
+
+</html>

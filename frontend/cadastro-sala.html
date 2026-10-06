@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<!-- cadastro de salas (admin) -->
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Cadastrar Sala - NAC System</title>
+
+    <link rel="stylesheet"
+        href="css/style.css">
+
+    <script src="js/dados.js"></script>
+
+</head>
+
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <img src="img/logonac.jpeg" class="logo">
+        
+        <div class="sidebar-title">
+            NAC SYSTEM
+        </div>
+
+        <nav class="menu"
+            id="menuLateral">
+        </nav>
+
+        <script>
+
+            montarMenu("cadastro");
+
+            document
+                .querySelector(".app")
+                .classList.add("menu-pronto");
+
+        </script>
+
+    </aside>
+
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Cadastrar Sala</h1>
+
+                <p>
+                    Adicione uma nova sala ao sistema
+                </p>
+
+            </div>
+
+            <div class="usuario-logado">
+
+                <div>
+
+                    <strong id="usuarioNome">
+                        Usuário
+                    </strong>
+
+                    <small id="usuarioTipo">
+                        Operador
+                    </small>
+
+                </div>
+
+                <div class="avatar"
+                    id="avatarUsuario">
+                    O
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <section class="conteudo">
+
+            <!-- CADASTRO -->
+
+            <div class="form-card">
+
+                <form id="formSala">
+
+                    <div class="form-grid">
+
+                        <div class="input-group">
+
+                            <label>
+                                Número da sala
+                            </label>
+
+                            <input
+                                type="text"
+                                id="numero"
+                                maxlength="4"
+                                inputmode="numeric"
+                                pattern="[0-9]{1,4}"
+                            >
+                        </div>
+
+
+                        <div class="input-group">
+
+                            <label>
+                                Status da produção
+                            </label>
+
+                            <select id="producao">
+
+                                <option value="true">
+                                    Em produção
+                                </option>
+
+                                <option value="false">
+                                    Fora de produção
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="input-group">
+
+                            <label>
+                                Grau da sala
+                            </label>
+
+                            <select id="grau" required>
+                                <option value="">Selecione o grau</option>
+                                <option value="A">Grau A</option>
+                                <option value="B">Grau B</option>
+                                <option value="C">Grau C</option>
+                            </select>
+
+                            <small class="limites-grau" id="limitesGrauNovo"></small>
+
+                        </div>
+
+
+                        <div class="input-group">
+
+                            <label>
+                                Data
+                            </label>
+
+                            <input
+                                type="date"
+                                id="data"
+                            >
+
+                        </div>
+
+
+                        <div class="input-group">
+
+                            <label>
+                                Hora
+                            </label>
+
+                            <input
+                                type="time"
+                                id="hora"
+                            >
+
+                        </div>
+
+
+                        <div class="input-group">
+                            <label>
+                                Partículas 0,5 µm
+                            </label>
+
+                            <input
+                                type="text"
+                                id="p05"
+                                maxlength="7"
+                                inputmode="numeric"
+                                pattern="[0-9]{1,7}"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                            >
+                        </div>
+
+                        <div class="input-group">
+                            <label>
+                                Partículas 5,0 µm
+                            </label>
+
+                            <input
+                                type="text"
+                                id="p50"
+                                maxlength="7"
+                                inputmode="numeric"
+                                pattern="[0-9]{1,7}"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                            >
+                        </div>
+
+
+
+                    </div>
+
+
+                    <p class="lista-salas-subtitulo">
+                        Data, hora e partículas são opcionais: se você
+                        preencher, viram o primeiro envase da sala. Os
+                        próximos envases são registrados pelos operadores
+                        designados (ou pelo administrador).
+                    </p>
+
+
+                    <p
+                        id="mensagemSala"
+                        class="mensagem-form">
+                    </p>
+
+
+                    <button
+                        type="submit"
+                        class="btn-login">
+
+                        CADASTRAR SALA
+
+                    </button>
+
+                </form>
+
+            </div>
+
+
+            <!-- SALAS CADASTRADAS -->
+
+            <div class="form-card lista-salas-card">
+
+                <h2>
+                    Salas Cadastradas
+                </h2>
+
+                <p class="lista-salas-subtitulo">
+                    Gerencie as salas adicionadas ao sistema
+                </p>
+
+
+                <div
+                    id="listaSalas"
+                    class="lista-salas">
+                </div>
+
+            </div>
+
+            <!-- RESPONSÁVEIS PELAS SALAS -->
+
+            <div class="form-card lista-salas-card">
+
+                <h2>
+                    Responsáveis pelas Salas
+                </h2>
+
+                <p class="lista-salas-subtitulo">
+                    Escolha quais operadores cuidam de cada sala. Um operador
+                    pode ter várias salas ou nenhuma.
+                </p>
+
+                <p
+                    id="mensagemAtribuicao"
+                    class="mensagem-form">
+                </p>
+
+                <div id="listaAtribuicoes">
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script>
+
+const tipo = verificarAdmin();
+
+
+if (tipo) {
+
+    document.getElementById("usuarioNome").textContent =
+        localStorage.getItem("usuario") || "Usuário";
+
+    document.getElementById("usuarioTipo").textContent =
+        "Administrador";
+
+    document.getElementById("avatarUsuario").textContent =
+        "A";
+
+    recarregar();
+
+}
+
+
+function mostrarMensagem(texto, classe) {
+
+    const mensagem = document.getElementById("mensagemSala");
+
+    mensagem.textContent = texto;
+    mensagem.className = "mensagem-form " + classe;
+
+}
+
+
+function mostrarMensagemAtribuicao(texto, classe) {
+
+    const mensagem = document.getElementById("mensagemAtribuicao");
+
+    mensagem.textContent = texto;
+    mensagem.className = "mensagem-form " + classe;
+
+}
+
+
+/* =========================
+   CADASTRAR SALA
+========================= */
+
+document
+    .getElementById("formSala")
+    .addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const botao = this.querySelector("button[type=submit]");
+
+        botao.disabled = true;
+
+        try {
+
+            await cadastrarSala({
+                numero: document.getElementById("numero").value.trim(),
+                producao: document.getElementById("producao").value === "true",
+                grau: document.getElementById("grau").value,
+                data: formatarData(document.getElementById("data").value),
+                hora: document.getElementById("hora").value,
+                p05: document.getElementById("p05").value,
+                p50: document.getElementById("p50").value
+            });
+
+            mostrarMensagem("Sala cadastrada com sucesso!", "sucesso");
+
+            this.reset();
+            mostrarLimitesNovo();
+
+            await recarregar();
+
+        } catch (erro) {
+
+            mostrarMensagem(erro.message, "erro");
+
+        } finally {
+
+            botao.disabled = false;
+
+        }
+
+    });
+
+
+/* =========================
+   LISTAS (salas + responsáveis)
+========================= */
+
+async function recarregar() {
+
+    let salas, operadores;
+
+    try {
+
+        const resultado = await Promise.all([
+            carregarSalas(),
+            api("/api/operadores")
+        ]);
+
+        salas = resultado[0];
+        operadores = resultado[1];
+
+    } catch (erro) {
+
+        document.getElementById("listaSalas").innerHTML =
+            `<div class="nenhuma-sala">${escapeHTML(erro.message)}</div>`;
+
+        return;
+
+    }
+
+    desenharListaSalas(salas);
+    desenharAtribuicoes(salas, operadores);
+
+}
+
+
+function desenharListaSalas(salas) {
+
+    const lista = document.getElementById("listaSalas");
+
+    lista.innerHTML = "";
+
+
+    if (salas.length === 0) {
+
+        lista.innerHTML = `
+            <div class="nenhuma-sala">
+                Nenhuma sala cadastrada.
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    salas.forEach(function(sala) {
+
+        const item = document.createElement("div");
+
+        item.className = "sala-cadastrada";
+        item.id = "sala-" + sala.numero;
+
+        const numero = escapeHTML(sala.numero);
+
+        const responsaveis =
+            (sala.operadores && sala.operadores.length > 0)
+                ? "Operadores: " + sala.operadores.map(escapeHTML).join(", ")
+                : "Sem operador designado";
+
+        item.innerHTML = `
+
+            <div class="sala-cadastrada-info">
+
+                <div class="sala-cadastrada-numero">
+
+                    <span>SALA</span>
+
+                    <strong>
+                        ${numero}
+                    </strong>
+
+                </div>
+
+
+                <div class="${
+                    sala.producao
+                        ? "status-cadastrada verde"
+                        : "status-cadastrada vermelho"
+                }">
+
+                    <span></span>
+
+                    ${
+                        sala.producao
+                            ? "EM PRODUÇÃO"
+                            : "PARADA"
+                    }
+
+                </div>
+
+
+                <div class="sala-grau ${sala.grau ? "" : "sem"}">
+                    ${sala.grau ? "GRAU " + escapeHTML(sala.grau) : "SEM GRAU"}
+                </div>
+
+
+                <div class="sala-operadores">
+                    ${responsaveis}
+                </div>
+
+            </div>
+
+
+            <div class="sala-cadastrada-acoes">
+
+                <button
+                    type="button"
+                    class="btn-secundario-pequeno"
+                    onclick="abrirEdicaoSala('${numero}')">
+
+                    EDITAR
+
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-secundario-pequeno"
+                    onclick="alternarProducao('${numero}', ${!sala.producao})">
+
+                    ${sala.producao ? "PARAR PRODUÇÃO" : "COLOCAR EM PRODUÇÃO"}
+
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-apagar"
+                    onclick="apagarSala('${numero}')">
+
+                    APAGAR
+
+                </button>
+
+            </div>
+
+
+            <form class="sala-edicao" hidden
+                onsubmit="salvarSala(event, '${numero}')">
+
+                <div class="input-group">
+                    <label>Número da sala</label>
+                    <input type="text" name="numero" maxlength="4"
+                        inputmode="numeric" pattern="[0-9]{1,4}" required
+                        value="${numero}"
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                </div>
+
+                <div class="input-group">
+                    <label>Grau da sala</label>
+                    <select name="grau" required
+                        onchange="this.form.querySelector('.limites-grau').textContent = descreverGrau(this.value)">
+                        ${["A", "B", "C"].map(function(g) {
+                            return `<option value="${g}" ${sala.grau === g ? "selected" : ""}>Grau ${g}</option>`;
+                        }).join("")}
+                    </select>
+                    <small class="limites-grau">${sala.grau ? descreverGrau(sala.grau) : ""}</small>
+                </div>
+
+                <p class="sala-edicao-aviso">
+                    Mudar o grau vale só para os próximos envases. Os envases
+                    já registrados continuam classificados pelo grau da época.
+                </p>
+
+                <div class="sala-edicao-acoes">
+                    <button type="button" class="btn-secundario-pequeno"
+                        onclick="fecharEdicaoSala('${numero}')">
+                        VOLTAR
+                    </button>
+                    <button type="submit" class="btn-secundario-pequeno salvar">
+                        SALVAR
+                    </button>
+                </div>
+
+            </form>
+
+        `;
+
+        lista.appendChild(item);
+
+    });
+
+}
+
+
+function desenharAtribuicoes(salas, operadores) {
+
+    const area = document.getElementById("listaAtribuicoes");
+
+    if (salas.length === 0) {
+
+        area.innerHTML = `
+            <div class="nenhuma-sala">
+                Cadastre uma sala para poder designar operadores.
+            </div>
+        `;
+
+        return;
+
+    }
+
+    if (operadores.length === 0) {
+
+        area.innerHTML = `
+            <div class="nenhuma-sala">
+                Nenhum operador cadastrado. Cadastre em Configurações.
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    area.innerHTML = salas.map(function(sala) {
+
+        const numero = escapeHTML(sala.numero);
+
+        const opcoes = operadores.map(function(op) {
+
+            const marcado = (op.salas || []).indexOf(sala.numero) !== -1;
+
+            return `
+                <label class="atribuicao-opcao">
+                    <input type="checkbox" value="${Number(op.id)}" ${marcado ? "checked" : ""}>
+                    ${escapeHTML(op.usuario)}
+                </label>
+            `;
+
+        }).join("");
+
+        return `
+            <div class="atribuicao-linha">
+
+                <div class="atribuicao-topo">
+
+                    <div>
+                        <span>SALA</span>
+                        <strong>${numero}</strong>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn-secundario-pequeno"
+                        onclick="salvarAtribuicao('${numero}')">
+
+                        SALVAR
+
+                    </button>
+
+                </div>
+
+                <div class="atribuicao-opcoes" data-sala-opcoes="${numero}">
+                    ${opcoes}
+                </div>
+
+            </div>
+        `;
+
+    }).join("");
+
+}
+
+
+/* =========================
+   DESIGNAR OPERADORES
+========================= */
+
+async function salvarAtribuicao(numero) {
+
+    const marcados = document.querySelectorAll(
+        '[data-sala-opcoes="' + numero + '"] input:checked'
+    );
+
+    const ids = Array.prototype.map.call(marcados, function(c) {
+        return Number(c.value);
+    });
+
+    try {
+
+        await designarOperadores(numero, ids);
+
+        mostrarMensagemAtribuicao(
+            "Sala " + numero + ": " +
+            (ids.length === 0
+                ? "nenhum operador designado."
+                : ids.length + " operador(es) designado(s)."),
+            "sucesso"
+        );
+
+        await recarregar();
+
+    } catch (erro) {
+
+        mostrarMensagemAtribuicao(erro.message, "erro");
+
+    }
+
+}
+
+
+/* =========================
+   GRAU DA SALA
+========================= */
+
+function mostrarLimitesNovo() {
+    const grau = document.getElementById("grau").value;
+    document.getElementById("limitesGrauNovo").textContent = grau ? descreverGrau(grau) : "";
+}
+
+document.getElementById("grau").addEventListener("change", mostrarLimitesNovo);
+
+
+/* =========================
+   EDITAR SALA
+========================= */
+
+function formEdicaoSala(numero) {
+    return document.getElementById("sala-" + numero).querySelector(".sala-edicao");
+}
+
+
+function abrirEdicaoSala(numero) {
+
+    document.querySelectorAll(".sala-edicao").forEach(function(f) { f.hidden = true; });
+
+    const form = formEdicaoSala(numero);
+    form.hidden = false;
+    form.elements.numero.focus();
+
+}
+
+
+function fecharEdicaoSala(numero) {
+
+    const form = formEdicaoSala(numero);
+    form.reset();
+    form.hidden = true;
+
+}
+
+
+async function salvarSala(event, numero) {
+
+    event.preventDefault();
+
+    const form = event.target;
+
+    try {
+
+        const sala = await editarSalaApi(numero, {
+            numero: form.elements.numero.value.trim(),
+            grau: form.elements.grau.value
+        });
+
+        await recarregar();
+
+        mostrarMensagem("Sala " + sala.numero + " salva (Grau " + sala.grau + ").", "sucesso");
+
+    } catch (erro) {
+
+        mostrarMensagem(erro.message, "erro");
+
+    }
+
+}
+
+
+/* =========================
+   STATUS DE PRODUÇÃO
+========================= */
+
+async function alternarProducao(numero, producao) {
+
+    try {
+
+        await alterarProducaoSala(numero, producao);
+
+        await recarregar();
+
+        mostrarMensagem(
+            "Sala " + numero + (producao ? " em produção." : " parada."),
+            "sucesso"
+        );
+
+    } catch (erro) {
+
+        mostrarMensagem(erro.message, "erro");
+
+    }
+
+}
+
+
+/* =========================
+   APAGAR SALA
+========================= */
+
+async function apagarSala(numero) {
+
+    const confirmar = confirm(
+        "Tem certeza que deseja apagar a Sala " + numero +
+        "? Todo o histórico de envases dela também será apagado."
+    );
+
+    if (!confirmar) {
+        return;
+    }
+
+    try {
+
+        await apagarSalaApi(numero);
+
+        await recarregar();
+
+        mostrarMensagem("Sala " + numero + " apagada com sucesso.", "sucesso");
+
+    } catch (erro) {
+
+        mostrarMensagem(erro.message, "erro");
+
+    }
+
+}
+
+</script>
+
+</body>
+
+</html>
+

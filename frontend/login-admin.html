@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<!-- login do admin -->
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Login Administrador - NAC System</title>
+
+    <link rel="stylesheet"
+        href="css/style.css">
+
+    <script src="js/dados.js"></script>
+
+</head>
+
+
+<body>
+
+    <div class="login-page">
+
+        <div class="login-container">
+
+
+            <div class="line-neon"></div>
+
+
+            <!-- ÍCONE -->
+
+            <div class="login-person">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8">
+
+                    <circle
+                        cx="12"
+                        cy="8"
+                        r="4">
+                    </circle>
+
+                    <path
+                        d="M4 21c0-4 3.5-7 8-7s8 3 8 7">
+                    </path>
+
+                </svg>
+
+            </div>
+
+
+            <!-- TÍTULO -->
+
+            <h2>
+                Administrador
+            </h2>
+
+
+            <p class="subtitulo">
+                Acesso administrativo
+            </p>
+
+
+            <!-- FORMULÁRIO -->
+
+            <form
+                id="formLogin"
+                autocomplete="off">
+
+
+                <!-- USUÁRIO -->
+
+                <div class="input-group">
+
+                    <label for="usuario">
+                        Usuário
+                    </label>
+
+                    <input
+                        type="text"
+                        id="usuario"
+                        maxlength="15"
+                        placeholder="Digite o usuário"
+                        autocomplete="username"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- SENHA -->
+
+                <div class="input-group">
+
+                    <label for="senha">
+                        Senha
+                    </label>
+
+                    <input
+                        type="password"
+                        id="senha"
+                        maxlength="8"
+                        inputmode="numeric"
+                        placeholder="Digite a senha"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- MENSAGEM -->
+
+                <p
+                    id="mensagemLogin"
+                    class="mensagem-erro">
+                </p>
+
+
+                <!-- ENTRAR -->
+
+                <button
+                    type="submit"
+                    class="btn-login">
+
+                    ENTRAR
+
+                </button>
+
+
+            </form>
+
+
+            <!-- VOLTAR -->
+
+            <button
+                type="button"
+                class="btn-voltar"
+                onclick="window.location.href='index.html'">
+
+                VOLTAR
+
+            </button>
+
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+    /* TIPO DE ACESSO DESTA PÁGINA: ADMIN */
+
+    const TIPO_ACESSO = "ADMIN";
+
+    const formLogin = document.getElementById("formLogin");
+    const campoUsuario = document.getElementById("usuario");
+    const campoSenha = document.getElementById("senha");
+    const mensagem = document.getElementById("mensagemLogin");
+
+
+    /* USUÁRIO: MÁXIMO 15 CARACTERES */
+
+    campoUsuario.addEventListener("input", function () {
+        this.value = this.value.slice(0, 15);
+    });
+
+
+    /* SENHA: SOMENTE NÚMEROS, MÁXIMO 8 */
+
+    campoSenha.addEventListener("input", function () {
+        this.value = this.value.replace(/\D/g, "").slice(0, 8);
+    });
+
+
+    /* LOGIN (validado no servidor) */
+
+    formLogin.addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        const usuario = campoUsuario.value.trim();
+        const senha = campoSenha.value;
+        const botao = formLogin.querySelector("button[type=submit]");
+
+        mensagem.textContent = "";
+
+        if (!usuario) {
+            mensagem.textContent = "Digite o usuário.";
+            campoUsuario.focus();
+            return;
+        }
+
+        if (!senha) {
+            mensagem.textContent = "Digite a senha.";
+            campoSenha.focus();
+            return;
+        }
+
+        botao.disabled = true;
+
+        try {
+
+            await fazerLogin(usuario, senha, TIPO_ACESSO);
+
+            window.location.href = "dashboard.html";
+
+        } catch (erro) {
+
+            mensagem.textContent = erro.message;
+            botao.disabled = false;
+
+        }
+
+    });
+
+</script>
+
+</body>
+
+</html>

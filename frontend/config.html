@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<!-- configurações e operadores (admin) -->
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Configurações - NAC System</title>
+
+    <link rel="stylesheet"
+        href="css/style.css">
+
+    <script src="js/dados.js"></script>
+
+</head>
+
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <img src="img/logonac.jpeg" class="logo">
+
+        <div class="sidebar-title">
+            NAC SYSTEM
+        </div>
+
+        <nav class="menu"
+            id="menuLateral">
+        </nav>
+
+        <script>
+
+            montarMenu("config");
+
+            document
+                .querySelector(".app")
+                .classList.add("menu-pronto");
+
+        </script>
+
+    </aside>
+
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Configurações</h1>
+
+                <p>
+                    Gerenciamento do sistema
+                </p>
+
+            </div>
+
+            <div class="usuario-logado">
+
+                <div>
+
+                    <strong id="usuarioNome">
+                        Admin
+                    </strong>
+
+                    <small>
+                        Administrador
+                    </small>
+
+                </div>
+
+                <div class="avatar">
+                    A
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <section class="conteudo">
+
+
+            <!-- =====================================================
+                 ALTERAR SENHA DO ADMINISTRADOR
+                 ===================================================== -->
+
+            <div class="form-card">
+
+                <h2>
+                    Alterar senha do administrador
+                </h2>
+
+                <form id="formSenha">
+
+                    <div class="input-group">
+
+                        <label>
+                            Nova senha
+                        </label>
+
+                        <div class="senha-container">
+
+                            <input
+                                type="password"
+                                id="novaSenha"
+                                maxlength="8"
+                                minlength="1"
+                                inputmode="numeric"
+                                pattern="[0-9]{1,8}"
+                                autocomplete="new-password"
+                                placeholder="Digite até 8 números"
+                                required
+                            >
+
+                            <span
+                                class="olho"
+                                onclick="mostrarSenhaAdmin()">
+
+                                👁
+
+                            </span>
+
+                        </div>
+
+                        <small>
+                            A senha deve conter somente números
+                            e ter no máximo 8 caracteres.
+                        </small>
+
+                    </div>
+
+
+                    <!-- CLASSIFICAÇÃO -->
+
+                    <div class="forca-senha">
+
+                        <div class="forca-senha-barra">
+
+                            <div
+                                id="forcaSenhaProgresso"
+                                class="forca-senha-progresso">
+                            </div>
+
+                        </div>
+
+                        <span
+                            id="forcaSenhaTexto"
+                            class="forca-senha-texto">
+
+                            Senha não informada
+
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="btn-login">
+
+                        ALTERAR SENHA
+
+                    </button>
+
+
+                    <p
+                        id="mensagemSenha"
+                        class="mensagem-form">
+
+                    </p>
+
+                </form>
+
+            </div>
+
+
+
+            <!-- =====================================================
+                 USUÁRIOS OPERADORES
+                 ===================================================== -->
+
+            <div class="form-card">
+
+                <h2>
+                    Usuários operadores
+                </h2>
+
+                <form id="formOperador">
+
+                    <div class="form-grid">
+
+
+                        <!-- USUÁRIO -->
+
+                        <div class="input-group">
+
+                            <label>
+                                Usuário
+                            </label>
+
+                            <input
+                                type="text"
+                                id="novoUsuario"
+                                maxlength="15"
+                                autocomplete="off"
+                                placeholder="Máximo 15 caracteres"
+                                required
+                            >
+
+                            <small>
+                                Máximo de 15 caracteres.
+                            </small>
+
+                        </div>
+
+
+
+                        <!-- SENHA -->
+
+                        <div class="input-group">
+
+                            <label>
+                                Senha
+                            </label>
+
+                            <div class="senha-container">
+
+                                <input
+                                    type="password"
+                                    id="senhaOperador"
+                                    maxlength="8"
+                                    minlength="1"
+                                    inputmode="numeric"
+                                    pattern="[0-9]{1,8}"
+                                    autocomplete="new-password"
+                                    placeholder="Somente números"
+                                    required
+                                >
+
+                                <span
+                                    class="olho"
+                                    onclick="mostrarSenha()">
+
+                                    👁
+
+                                </span>
+
+                            </div>
+
+                            <small>
+                                Somente números, até 8 caracteres.
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="btn-login">
+
+                        CADASTRAR USUÁRIO
+
+                    </button>
+
+                </form>
+
+
+                <div
+                    id="listaOperadores"
+                    class="lista-operadores">
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   CAMPOS
+   ========================================================= */
+
+const campoNovaSenha = document.getElementById("novaSenha");
+const campoUsuario = document.getElementById("novoUsuario");
+const campoSenhaOperador = document.getElementById("senhaOperador");
+const forcaProgresso = document.getElementById("forcaSenhaProgresso");
+const forcaTexto = document.getElementById("forcaSenhaTexto");
+
+
+/* USUÁRIO: MÁXIMO 15 CARACTERES */
+
+campoUsuario.addEventListener("input", function () {
+    this.value = this.value.slice(0, 15);
+});
+
+
+/* SENHA DO ADMINISTRADOR: SOMENTE NÚMEROS, MÁXIMO 8 */
+
+campoNovaSenha.addEventListener("input", function () {
+
+    this.value = this.value.replace(/\D/g, "").slice(0, 8);
+
+    atualizarClassificacaoSenha(this.value);
+
+});
+
+
+/* SENHA DO OPERADOR: SOMENTE NÚMEROS, MÁXIMO 8 */
+
+campoSenhaOperador.addEventListener("input", function () {
+    this.value = this.value.replace(/\D/g, "").slice(0, 8);
+});
+
+
+/* CLASSIFICAÇÃO DA SENHA */
+
+function atualizarClassificacaoSenha(senha) {
+
+    if (!senha) {
+
+        forcaProgresso.style.width = "0%";
+        forcaTexto.textContent = "Senha não informada";
+
+        return;
+
+    }
+
+    if (/^[0-9]{1,8}$/.test(senha)) {
+
+        forcaProgresso.style.width =
+            Math.min(100, (senha.length / 8) * 100) + "%";
+
+        forcaTexto.textContent =
+            "Senha válida - " + senha.length + "/8 caracteres";
+
+        return;
+
+    }
+
+    forcaProgresso.style.width = "0%";
+    forcaTexto.textContent = "Senha inválida";
+
+}
+
+
+/* =========================================================
+   NOME DO USUÁRIO LOGADO (somente administrador)
+   ========================================================= */
+
+const tipo = verificarAdmin();
+
+
+if (tipo) {
+
+    document.getElementById("usuarioNome").textContent =
+        localStorage.getItem("usuario") || "Admin";
+
+    mostrarOperadores();
+
+}
+
+
+/* =========================================================
+   ALTERAR SENHA DO ADMINISTRADOR
+   ========================================================= */
+
+document
+    .getElementById("formSenha")
+    .addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        const novaSenha = document.getElementById("novaSenha").value;
+        const mensagem = document.getElementById("mensagemSenha");
+
+        if (!/^[0-9]{1,8}$/.test(novaSenha)) {
+
+            mensagem.textContent =
+                "A senha deve conter somente números e ter no máximo 8 caracteres.";
+
+            mensagem.className = "mensagem-form erro";
+
+            return;
+
+        }
+
+        try {
+
+            await api("/api/admin/senha", {
+                method: "PUT",
+                body: { senha: novaSenha }
+            });
+
+            mensagem.textContent = "Senha alterada com sucesso.";
+            mensagem.className = "mensagem-form sucesso";
+
+            this.reset();
+
+            atualizarClassificacaoSenha("");
+
+        } catch (erro) {
+
+            mensagem.textContent = erro.message;
+            mensagem.className = "mensagem-form erro";
+
+        }
+
+    });
+
+
+/* =========================================================
+   CADASTRAR OPERADOR
+   ========================================================= */
+
+document
+    .getElementById("formOperador")
+    .addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        const usuario = campoUsuario.value.trim().slice(0, 15);
+
+        const senha = campoSenhaOperador.value.replace(/\D/g, "").slice(0, 8);
+
+        if (!usuario) {
+            alert("Digite o usuário.");
+            return;
+        }
+
+        if (!senha) {
+            alert("Digite uma senha.");
+            return;
+        }
+
+        try {
+
+            await api("/api/operadores", {
+                method: "POST",
+                body: { usuario: usuario, senha: senha }
+            });
+
+            this.reset();
+
+            await mostrarOperadores();
+
+            alert("Usuário cadastrado com sucesso!");
+
+        } catch (erro) {
+
+            alert(erro.message);
+
+        }
+
+    });
+
+
+/* =========================================================
+   MOSTRAR OPERADORES
+   (a senha não é mostrada: o administrador só pode definir uma nova)
+   ========================================================= */
+
+let operadoresAtuais = [];
+
+async function mostrarOperadores() {
+
+    const lista = document.getElementById("listaOperadores");
+
+    try {
+
+        operadoresAtuais = await api("/api/operadores");
+
+    } catch (erro) {
+
+        lista.innerHTML = "<p>" + escapeHTML(erro.message) + "</p>";
+
+        return;
+
+    }
+
+    if (operadoresAtuais.length === 0) {
+
+        lista.innerHTML = "<p>Nenhum operador cadastrado.</p>";
+
+        return;
+
+    }
+
+    lista.innerHTML = operadoresAtuais.map(function (operador) {
+
+        const id = Number(operador.id);
+
+        const salas = operador.salas.length
+            ? "Salas: " + operador.salas.map(escapeHTML).join(", ")
+            : "Sem sala designada";
+
+        return `
+
+            <div class="operador-item ${operador.ativo ? "" : "desativado"}" id="operador-${id}">
+
+                <div class="operador-linha">
+
+                    <div class="operador-info">
+
+                        <strong>
+                            ${escapeHTML(operador.usuario)}
+                            ${operador.ativo ? "" : '<em class="selo-desativado">DESATIVADO</em>'}
+                        </strong>
+
+                        <span>
+                            ${salas} · ${operador.envases} envase(s) registrado(s)
+                        </span>
+
+                    </div>
+
+                    <div class="operador-acoes">
+
+                        <button type="button" class="btn-secundario-pequeno"
+                            onclick="abrirEdicaoOperador(${id})">
+                            EDITAR
+                        </button>
+
+                        <button type="button" class="btn-secundario-pequeno"
+                            onclick="alternarOperador(${id}, ${!operador.ativo})">
+                            ${operador.ativo ? "DESATIVAR" : "REATIVAR"}
+                        </button>
+
+                        ${
+                            operador.envases === 0
+                                ? `<button type="button" class="btn-apagar"
+                                       title="Só para cadastro feito por engano"
+                                       onclick="removerOperador(${id})">
+                                       EXCLUIR
+                                   </button>`
+                                : ""
+                        }
+
+                    </div>
+
+                </div>
+
+                <form class="operador-edicao" hidden
+                    onsubmit="salvarOperador(event, ${id})">
+
+                    <div class="input-group">
+                        <label>Usuário</label>
+                        <input type="text" name="usuario" maxlength="15"
+                            autocomplete="off" required
+                            value="${escapeHTML(operador.usuario)}">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Nova senha</label>
+                        <input type="password" name="senha" maxlength="8"
+                            inputmode="numeric" autocomplete="new-password"
+                            placeholder="Em branco = mantém a atual"
+                            oninput="this.value = this.value.replace(/\D/g, '').slice(0, 8)">
+                    </div>
+
+                    <div class="operador-edicao-acoes">
+                        <button type="button" class="btn-secundario-pequeno"
+                            onclick="fecharEdicaoOperador(${id})">
+                            VOLTAR
+                        </button>
+                        <button type="submit" class="btn-secundario-pequeno salvar">
+                            SALVAR
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+
+        `;
+
+    }).join("");
+
+}
+
+
+/* =========================================================
+   EDITAR OPERADOR (nome e/ou nova senha)
+   ========================================================= */
+
+function abrirEdicaoOperador(id) {
+
+    document.querySelectorAll(".operador-edicao").forEach(function (f) { f.hidden = true; });
+
+    const form = document.querySelector("#operador-" + id + " .operador-edicao");
+    form.hidden = false;
+    form.elements.usuario.focus();
+
+}
+
+
+function fecharEdicaoOperador(id) {
+
+    const form = document.querySelector("#operador-" + id + " .operador-edicao");
+    form.reset();
+    form.hidden = true;
+
+}
+
+
+async function salvarOperador(event, id) {
+
+    event.preventDefault();
+
+    const form = event.target;
+    const usuario = form.elements.usuario.value.trim();
+    const senha = form.elements.senha.value;
+
+    try {
+
+        const r = await editarOperadorApi(id, { usuario: usuario, senha: senha });
+
+        await mostrarOperadores();
+
+        alert(
+            r.senha_alterada
+                ? "Dados salvos. A nova senha já vale no próximo login de " + r.usuario + "."
+                : "Dados salvos."
+        );
+
+    } catch (erro) {
+
+        alert(erro.message);
+
+    }
+
+}
+
+
+/* =========================================================
+   DESATIVAR / REATIVAR OPERADOR
+   ========================================================= */
+
+async function alternarOperador(id, ativar) {
+
+    if (!ativar && !confirm(
+        "Desativar este operador? Ele não vai conseguir entrar no sistema, " +
+        "mas os envases que registrou continuam no histórico."
+    )) {
+        return;
+    }
+
+    try {
+
+        await ativarOperadorApi(id, ativar);
+
+        await mostrarOperadores();
+
+    } catch (erro) {
+
+        alert(erro.message);
+
+    }
+
+}
+
+
+/* =========================================================
+   EXCLUIR OPERADOR (só quem nunca registrou envase)
+   ========================================================= */
+
+async function removerOperador(id) {
+
+    if (!confirm("Excluir este usuário? Use só para cadastro feito por engano.")) {
+        return;
+    }
+
+    try {
+
+        await api("/api/operadores/" + id, { method: "DELETE" });
+
+        await mostrarOperadores();
+
+    } catch (erro) {
+
+        alert(erro.message);
+
+    }
+
+}
+
+</script>
+
+</body>
+
+</html>
