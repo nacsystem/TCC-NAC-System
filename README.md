@@ -1,6 +1,6 @@
 ## Termos de Uso e Compartilhamento
 
-**Autores:** LEONARDO JOSÉ O. CABRAL, MARINA G. NEVES, MURILO ANTÔNIO F. CORREA, PEDRO HENRIQUE V.
+**Autores:** Leonardo José O. Cabral, Marina G. Neves, Murilo Antonio F. Correa, Pedro Henrique V.
 AMARO
 **Orientador(a):** [Nome do orientador]
 **Projeto:** [Nome do projeto], TCC [Curso], [Escola], [Ano]
