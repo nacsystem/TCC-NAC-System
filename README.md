@@ -1,10 +1,10 @@
 ## Termos de Uso e Compartilhamento
 
-**Autores:** Leonardo José O. Cabral, Marina G. Neves, Murilo Antonio F. Correa, Pedro Henrique V. Amaro
+**Autores:** Leonardo José O. Cabral, Marina G. Neves, Murilo Antonio F. Correa, Pedro Henrique V. Amaro.
 **Orientador(a):** Mateus Amendola Redivo
 **Projeto:** NAC System, TCC Informática, Colégio Técnico Bento Quirino, 2026.
 
-© 2026 [Nomes dos autores]. Todos os direitos reservados,
+© 2026, Leonardo José O. Cabral, Marina G. Neves, Murilo Antonio F. Correa, Pedro Henrique V. Amaro.. Todos os direitos reservados,
 exceto o que está expressamente permitido abaixo.
 
 ### Permitido
