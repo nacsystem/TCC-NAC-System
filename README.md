@@ -29,8 +29,6 @@ Cada sala tem um grau de classificação (A, B ou C). O sistema compara as conta
 - Gráficos das partículas por sala.
 - Exportação do histórico em PDF.
 
-> Os resultados apresentados no TCC foram obtidos por simulação. O sistema não foi validado em uma linha de produção real.
-
 ## Tecnologias
 
 | Camada | Ferramentas |
